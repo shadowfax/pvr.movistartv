@@ -367,6 +367,17 @@ std::vector<DVBSTPSingleService> MovistarTVDVBSTP::GetBroadcastDiscovery(const s
 		{
 			singleService.serviceInfo.description = pSIDescriptionNode->value();
 		}
+
+		xml_node<> *pSIGenreElement = pSIElement->first_node("Genre");
+		if (pSIGenreElement)
+		{
+			xml_node<> *pSIGenreNameNode = pSIGenreElement->first_node("urn:Name");
+			if (pSIGenreNameNode)
+			{
+				singleService.serviceInfo.genre.urn_name = pSIGenreNameNode->value();
+			}
+		}
+
 		
 		/* Add the singleService*/
 		serviceList.push_back(singleService);

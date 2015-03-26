@@ -21,6 +21,13 @@ struct PVRMovistarTVChannel
 	/* std::vector<PVRDemoEpgEntry> epg; */
 };
 
+struct PVRMovistarTVChannelGroup
+{
+	int              iGroupId;
+	std::string      strGroupName;
+	std::vector<int> members;
+};
+
 struct MovistarTVAddress
 {
 	std::string address;
@@ -37,14 +44,19 @@ class MovistarTV
 		virtual PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
 		virtual bool GetChannel(const PVR_CHANNEL &channel, PVRMovistarTVChannel &myChannel);
 
+		virtual int GetChannelGroupsAmount(void);
+		virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio);
+		virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
+
 	protected:
 		virtual void bootstrap(void);
 		virtual bool LoadChannels(void);
 
 	private:
 		PLATFORM::CMutex m_mutex;
-		MovistarTVRPCClientProfile        m_clientProfile;
-		std::vector<MovistarTVAddress>    m_offerings;
-		std::vector<PVRMovistarTVChannel> m_channels;
+		MovistarTVRPCClientProfile             m_clientProfile;
+		std::vector<MovistarTVAddress>         m_offerings;
+		std::vector<PVRMovistarTVChannel>      m_channels;
+		std::vector<PVRMovistarTVChannelGroup> m_groups;
 		
 };

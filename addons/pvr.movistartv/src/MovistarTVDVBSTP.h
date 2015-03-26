@@ -74,10 +74,17 @@ struct DVBSTPIPMulticastAddress
 	unsigned short port;
 };
 
+struct DVBSTPSingeServiceSIGenre
+{
+	//std::string href;
+	std::string urn_name;
+};
+
 struct DVBSTPSingeServiceSI
 {
 	std::string name;
 	std::string description;
+	DVBSTPSingeServiceSIGenre genre;
 };
 
 struct DVBSTPSingleService

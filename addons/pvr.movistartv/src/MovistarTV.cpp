@@ -13,6 +13,7 @@ MovistarTV::MovistarTV(void)
 
 MovistarTV::~MovistarTV(void)
 {
+	m_groups.clear();
 	m_channels.clear();
 }
 
@@ -196,6 +197,7 @@ bool MovistarTV::LoadChannels(void)
 	PLATFORM::CLockObject lock(m_mutex);
 
 	int iUniqueChannelId = 1;
+	int iUniqueChannelGroupId = 1;
 	MovistarTVDVBSTP *dvb_stp = new MovistarTVDVBSTP;
 	std::vector<DVBSTPPackage> dvbPackages;
 	std::vector<DVBSTPSingleService> dvbServices;
@@ -280,6 +282,33 @@ bool MovistarTV::LoadChannels(void)
 			m_channels.push_back(channel);
 
 			iUniqueChannelId++;
+
+			/* Channel groups */
+			bool channel_group_found = false;
+			for (unsigned int iChannelGroupPtr = 0; iChannelGroupPtr < m_groups.size(); iChannelGroupPtr++)
+			{
+				PVRMovistarTVChannelGroup &channelGroup = m_groups.at(iChannelGroupPtr);
+
+				if (channelGroup.strGroupName == singleService.serviceInfo.genre.urn_name)
+				{
+					channelGroup.members.push_back(channel.iUniqueId);
+					channel_group_found = true;
+				}
+
+			}
+
+			if (!channel_group_found) 
+			{
+				PVRMovistarTVChannelGroup channelGroup;
+
+				channelGroup.iGroupId = iUniqueChannelGroupId;
+				channelGroup.strGroupName = singleService.serviceInfo.genre.urn_name;
+				channelGroup.members.push_back(channel.iUniqueId);
+
+				m_groups.push_back(channelGroup);
+
+				iUniqueChannelGroupId++;
+			}
 		}
 	}
 
@@ -290,8 +319,10 @@ bool MovistarTV::LoadChannels(void)
 
 PVR_ERROR MovistarTV::GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
-	
-	LoadChannels();
+	if (m_channels.size() <= 0)
+	{
+		LoadChannels();
+	}
 
 	for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
 	{
@@ -312,43 +343,6 @@ PVR_ERROR MovistarTV::GetChannels(ADDON_HANDLE handle, bool bRadio)
 
 		PVR->TransferChannelEntry(handle, &xbmcChannel);
 	}
-
-	/* In the meanwhile... */
-	/*
-	PVRMovistarTVChannel channel;
-
-	channel.bRadio = false;
-	channel.iChannelNumber = 1;
-	channel.iEncryptionSystem = 0;
-	channel.iSubChannelNumber = 0;
-	channel.iUniqueId = 1;
-	channel.strChannelName = "La 1";
-	channel.strIconPath = "https://pbs.twimg.com/profile_images/323237600/tve1_400x400.png";
-	channel.strStreamURL = "rtp://@239.0.0.76:8208";
-
-	m_channels.push_back(channel);
-
-
-	for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
-	{
-		PVRMovistarTVChannel &channel = m_channels.at(iChannelPtr);
-
-		PVR_CHANNEL xbmcChannel;
-		memset(&xbmcChannel, 0, sizeof(PVR_CHANNEL));
-
-		xbmcChannel.iUniqueId = channel.iUniqueId;
-		xbmcChannel.bIsRadio = channel.bRadio;
-		xbmcChannel.iChannelNumber = channel.iChannelNumber;
-		xbmcChannel.iSubChannelNumber = channel.iSubChannelNumber;
-		strncpy(xbmcChannel.strChannelName, channel.strChannelName.c_str(), sizeof(xbmcChannel.strChannelName) - 1);
-		strncpy(xbmcChannel.strStreamURL, channel.strStreamURL.c_str(), sizeof(xbmcChannel.strStreamURL) - 1);
-		xbmcChannel.iEncryptionSystem = channel.iEncryptionSystem;
-		strncpy(xbmcChannel.strIconPath, channel.strIconPath.c_str(), sizeof(xbmcChannel.strIconPath) - 1);
-		xbmcChannel.bIsHidden = false;
-
-		PVR->TransferChannelEntry(handle, &xbmcChannel);
-	}
-	*/
 
 	return PVR_ERROR_NO_ERROR;
 }
@@ -373,4 +367,61 @@ bool MovistarTV::GetChannel(const PVR_CHANNEL &channel, PVRMovistarTVChannel &my
 		}
 	}
 	return false;
+}
+
+int MovistarTV::GetChannelGroupsAmount(void)
+{
+	return m_groups.size();
+}
+
+PVR_ERROR MovistarTV::GetChannelGroups(ADDON_HANDLE handle, bool bRadio)
+{
+	if (m_channels.size() <= 0)
+	{
+		LoadChannels();
+	}
+
+	for (unsigned int iGroupPtr = 0; iGroupPtr < m_groups.size(); iGroupPtr++)
+	{
+		PVRMovistarTVChannelGroup &group = m_groups.at(iGroupPtr);
+		
+		PVR_CHANNEL_GROUP xbmcGroup;
+		memset(&xbmcGroup, 0, sizeof(PVR_CHANNEL_GROUP));
+
+		xbmcGroup.bIsRadio = bRadio;
+		strncpy(xbmcGroup.strGroupName, group.strGroupName.c_str(), sizeof(xbmcGroup.strGroupName) - 1);
+
+		PVR->TransferChannelGroup(handle, &xbmcGroup);
+	}
+
+	return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR MovistarTV::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group)
+{
+	for (unsigned int iGroupPtr = 0; iGroupPtr < m_groups.size(); iGroupPtr++)
+	{
+		PVRMovistarTVChannelGroup &myGroup = m_groups.at(iGroupPtr);
+		if (!strcmp(myGroup.strGroupName.c_str(), group.strGroupName))
+		{
+			for (unsigned int iChannelPtr = 0; iChannelPtr < myGroup.members.size(); iChannelPtr++)
+			{
+				int iId = myGroup.members.at(iChannelPtr) - 1;
+				if (iId < 0 || iId >(int)m_channels.size() - 1)
+					continue;
+
+				PVRMovistarTVChannel &channel = m_channels.at(iId);
+				PVR_CHANNEL_GROUP_MEMBER xbmcGroupMember;
+				memset(&xbmcGroupMember, 0, sizeof(PVR_CHANNEL_GROUP_MEMBER));
+
+				strncpy(xbmcGroupMember.strGroupName, group.strGroupName, sizeof(xbmcGroupMember.strGroupName) - 1);
+				xbmcGroupMember.iChannelUniqueId = channel.iUniqueId;
+				xbmcGroupMember.iChannelNumber = channel.iChannelNumber;
+
+				PVR->TransferChannelGroupMember(handle, &xbmcGroupMember);
+			}
+		}
+	}
+
+	return PVR_ERROR_NO_ERROR;
 }

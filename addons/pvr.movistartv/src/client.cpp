@@ -163,7 +163,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsEPG                = false;
   pCapabilities->bSupportsTV                 = true;
   pCapabilities->bSupportsRadio              = false;
-  pCapabilities->bSupportsChannelGroups      = false;
+  pCapabilities->bSupportsChannelGroups      = true;
   pCapabilities->bSupportsRecordings         = false;
   pCapabilities->bSupportsTimers             = false;
   pCapabilities->bHandlesInputStream         = false;
@@ -258,12 +258,32 @@ PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
   return PVR_ERROR_NO_ERROR;
 }
 
+int GetChannelGroupsAmount(void) 
+{ 
+	if (m_data)
+		return m_data->GetChannelGroupsAmount();
+	
+	return -1; 
+}
+
+PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio) 
+{
+	if (m_data)
+		return m_data->GetChannelGroups(handle, bRadio);
+
+	return PVR_ERROR_SERVER_ERROR;
+}
+
+PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group) { 
+	if (m_data)
+		return m_data->GetChannelGroupMembers(handle, group);
+
+	return PVR_ERROR_SERVER_ERROR;
+}
+
 /** UNUSED API FUNCTIONS */
 PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES* pProperties) { return PVR_ERROR_NOT_IMPLEMENTED; }
-int GetChannelGroupsAmount(void) { return -1; }
-PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetRecordings(ADDON_HANDLE handle) { return PVR_ERROR_NOT_IMPLEMENTED; }
 int GetRecordingsAmount(void) { return -1; }
 PVR_ERROR GetTimers(ADDON_HANDLE handle) { return PVR_ERROR_NOT_IMPLEMENTED; }
