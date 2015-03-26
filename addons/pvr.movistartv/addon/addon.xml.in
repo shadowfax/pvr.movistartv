@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon
+  id="pvr.movistartv"
+  version="0.0.1"
+  name="PVR Movistar TV Client"
+  provider-name="Juan Pedro Gonzalez">
+  <requires>
+    <c-pluff version="0.1"/>
+    <import addon="xbmc.pvr" version="1.9.2"/>
+  </requires>
+  <extension
+    point="xbmc.pvrclient"
+    library_linux="Kodi_MovistarTV.pvr"
+	library_osx="Kodi_MovistarTV.pvr"
+    library_freebsd="Kodi_MovistarTV.pvr"
+    library_wingl="Kodi_MovistarTV_win32.dll"
+    library_windx="Kodi_MovistarTV_win32.dll"
+    library_android="libKodi_MovistarTV.so" />
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">Movistar TV PVR Client</summary>
+    <summary lang="es">Cliente PVR Movistar TV</summary>
+    <description lang="en">PVR Client for Movistar TV</description>
+    <description lang="es">Cliente PVR para Movistar TV</description>
+    <disclaimer lang="en">Just contains stubs</disclaimer>
+    <disclaimer lang="es">Sólo contiene fragmentos</disclaimer>
+    <platform>@OS@</platform>
+  </extension>
+</addon>
