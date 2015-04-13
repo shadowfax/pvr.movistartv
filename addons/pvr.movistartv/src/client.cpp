@@ -55,6 +55,10 @@ void ADDON_ReadSettings(void)
   //STUB
 }
 
+//-- Create -------------------------------------------------------------------
+// Called after loading of the dll, all steps to become Client functional
+// must be performed here.
+//-----------------------------------------------------------------------------
 ADDON_STATUS ADDON_Create(void* hdl, void* props)
 {
   if (!hdl || !props)
@@ -91,11 +95,10 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   return m_CurStatus;
 }
 
-ADDON_STATUS ADDON_GetStatus()
-{
-  return m_CurStatus;
-}
-
+//-- Destroy ------------------------------------------------------------------
+// Used during destruction of the client, all steps to do clean and safe Create
+// again must be done.
+//-----------------------------------------------------------------------------
 void ADDON_Destroy()
 {
   delete m_data;
@@ -107,6 +110,17 @@ void ADDON_Destroy()
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
 
+//-- GetStatus ----------------------------------------------------------------
+// Report the current Add-On Status to XBMC
+//-----------------------------------------------------------------------------
+ADDON_STATUS ADDON_GetStatus()
+{
+	return m_CurStatus;
+}
+
+//-- HasSettings --------------------------------------------------------------
+// Report "true", yes this AddOn have settings
+//-----------------------------------------------------------------------------
 bool ADDON_HasSettings()
 {
   return true;
@@ -114,9 +128,14 @@ bool ADDON_HasSettings()
 
 unsigned int ADDON_GetSettings(ADDON_StructSetting ***sSet)
 {
-  return 0;
+	//NOTUSED(sSet);
+	return 0;
 }
 
+//-- SetSetting ---------------------------------------------------------------
+// Called everytime a setting is changed by the user and to inform AddOn about
+// new setting and to do required stuff to apply it.
+//-----------------------------------------------------------------------------
 ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 {
   return ADDON_STATUS_OK;
@@ -204,6 +223,9 @@ PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed)
   *iUsed  = 0;
   return PVR_ERROR_NO_ERROR;
 }
+
+/*******************************************/
+/** PVR Channel Functions                 **/
 
 int GetChannelsAmount(void)
 {
