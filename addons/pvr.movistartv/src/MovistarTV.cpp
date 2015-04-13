@@ -96,10 +96,11 @@ bool MovistarTV::LoadChannels(void)
 		MovistarTVAddress &address = m_offerings.at(iOfferingPtr);
 
 		files = dvb_stp->GetAllXmlFiles(address.address, address.port);
-		XBMC->Log(LOG_NOTICE, "Completed GetAllXmlFiles() for %s:%d with %d files", address.address.c_str(), address.port, files.size());
 	}
 
 	delete dvb_stp;
+
+	XBMC->Log(LOG_DEBUG, "Channels have been succesfully loaded");
 
 	return true;
 }
@@ -111,6 +112,7 @@ PVR_ERROR MovistarTV::GetChannels(ADDON_HANDLE handle, bool bRadio)
 		LoadChannels();
 	}
 
+	XBMC->Log(LOG_DEBUG, "Converting channels to KODI format");
 	for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
 	{
 		PVRMovistarTVChannel &mvtvChannel = m_channels.at(iChannelPtr);
@@ -326,6 +328,8 @@ void MovistarTV::ParseServiceProviderDiscovery(const std::string& data)
 			}
 		}
 	} // end FOR
+
+	XBMC->Log(LOG_DEBUG, "Succesfully parsed Service Provider Discovery  Information");
 }
 
 void MovistarTV::ParseBroadcastDiscoveryInformation(const std::string& data)
