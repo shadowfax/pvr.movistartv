@@ -7,10 +7,140 @@ using namespace rapidxml;
 
 MovistarTVDVBSTP::MovistarTVDVBSTP(void)
 {
+	m_DVBSTPCallback = NULL;
 }
 
 MovistarTVDVBSTP::~MovistarTVDVBSTP(void)
 {
+}
+
+std::vector<SDSMulticastDeliveryPacket> MovistarTVDVBSTP::GetAllXmlFiles(const std::string& address, unsigned short port)
+{
+	SOCKET sd;
+	struct ip_mreq mreq;
+	std::vector<SDSMulticastDeliveryPacket> files;
+
+	if ((sd = CreateSocket(port)) == INVALID_SOCKET)
+	{
+		// CreateSocket() already logs the error.
+		return files;
+	}
+
+	/* join multicast group */
+	XBMC->Log(LOG_DEBUG, "Joining multicast group %s on port %d", address.c_str(), port);
+	mreq.imr_multiaddr.s_addr = inet_addr(address.c_str());
+	mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+
+#if defined(TARGET_WINDOWS)
+	if (setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) < 0)
+#else
+	if (setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0)
+#endif
+	{
+		XBMC->Log(LOG_ERROR, "Can not join the multicast group %s", address.c_str());
+		closesocket(sd);
+		return files;
+	}
+
+	bool bDone = false;
+	char buffer[2048];
+	SDSMulticastDeliveryPacket packet;
+	bool bFirstPacket = true;
+	SDSMulticastDeliveryHeader firstPacketHeader;
+
+	while (!bDone)
+	{
+		ssize_t nBytes = recv(sd, (char *)&buffer, 2048, 0);
+		if (nBytes <= 0)
+		{
+			XBMC->Log(LOG_ERROR, "Connection timeout");
+			break;
+		}
+
+		/* Parse the header */
+		if (!ParsePacket((const char *)&buffer, nBytes, packet))
+		{
+			XBMC->Log(LOG_ERROR, "Can not parse header");
+			continue;
+		}
+
+		if (bFirstPacket)
+		{
+			firstPacketHeader = packet.header;
+			bFirstPacket = false;
+			if (packet.header.section_number == 0)
+			{
+				files.push_back(packet);
+
+				if ((packet.header.section_number == packet.header.last_section_number) && (m_DVBSTPCallback != NULL))
+				{
+					m_DVBSTPCallback->OnXmlReceived(packet);
+				}
+			}
+
+			continue;
+		}
+
+		/* Search for the file */
+		bool bFileFound = false;
+		for (unsigned int iFilePtr = 0; iFilePtr < files.size(); iFilePtr++)
+		{
+			SDSMulticastDeliveryPacket &currentFile = files.at(iFilePtr);
+
+			if ((currentFile.header.payload_id == packet.header.payload_id) && (currentFile.header.segment_id == packet.header.segment_id) && (currentFile.header.segment_version == packet.header.segment_version))
+			{
+				/* Found a math */
+				bFileFound = true;
+
+				if (packet.header.section_number == currentFile.header.section_number + 1)
+				{
+					currentFile.payload.append(packet.payload);
+					currentFile.header.section_number = packet.header.section_number;
+
+					if ((currentFile.header.section_number == currentFile.header.last_section_number) && (m_DVBSTPCallback != NULL))
+					{
+						m_DVBSTPCallback->OnXmlReceived(currentFile);
+					}
+				}
+
+				break;
+			}
+		}
+
+		/* If not found and new file... */
+		if ((!bFileFound) && (packet.header.section_number == 0))
+		{
+			files.push_back(packet);
+
+			if ((packet.header.section_number == packet.header.last_section_number) && (m_DVBSTPCallback != NULL))
+			{
+				m_DVBSTPCallback->OnXmlReceived(packet);
+			}
+		}
+
+		/* Check if we are done */
+		if ((firstPacketHeader.payload_id == packet.header.payload_id) && (firstPacketHeader.segment_id == packet.header.segment_id) && (firstPacketHeader.segment_version == packet.header.segment_version))
+		{
+			if (files.size() > 0)
+			{
+				bool bAllComplete = true;
+				for (unsigned int iFilePtr = 0; iFilePtr < files.size(); iFilePtr++)
+				{
+					SDSMulticastDeliveryPacket &currentFile = files.at(iFilePtr);
+
+					if (currentFile.header.section_number != currentFile.header.last_section_number)
+					{
+						bAllComplete = false;
+						break;
+					}
+				}
+
+				bDone = bAllComplete;
+			}
+		}
+	}
+
+	return files;
 }
 
 bool MovistarTVDVBSTP::GetXmlFile(const std::string& address, unsigned short port, unsigned short payload_id, std::string& return_value)
@@ -539,4 +669,9 @@ void MovistarTVDVBSTP::WriteCache(const std::string& filename, const std::string
 		return;
 	}
 
+}
+
+void MovistarTVDVBSTP::setCallback(IDVBSTPCallBack* callback)
+{
+	m_DVBSTPCallback = callback;
 }

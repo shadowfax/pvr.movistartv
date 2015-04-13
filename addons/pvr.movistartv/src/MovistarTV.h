@@ -5,6 +5,7 @@
 #include "platform/threads/mutex.h"
 #include "client.h"
 #include "MovistarTVRPC.h"
+#include "MovistarTVDVBSTP.h"
 
 struct PVRMovistarTVChannel
 {
@@ -34,7 +35,7 @@ struct MovistarTVAddress
 	unsigned short port;
 };
 
-class MovistarTV
+class MovistarTV : IDVBSTPCallBack
 {
 	public:
 		MovistarTV(void);
@@ -48,15 +49,21 @@ class MovistarTV
 		virtual PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio);
 		virtual PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
 
+		virtual void OnXmlReceived(const SDSMulticastDeliveryPacket& file);
 	protected:
 		virtual void bootstrap(void);
 		virtual bool LoadChannels(void);
 
+		void ParseServiceProviderDiscovery(const std::string& data);
+		void ParseBroadcastDiscoveryInformation(const std::string& data);
+		void ParsePackageDiscoveryInformation(const std::string& data);
+
 	private:
-		PLATFORM::CMutex m_mutex;
+		PLATFORM::CMutex                       m_ChannelCacheMutex;
+		PLATFORM::CMutex                       m_mutex;
 		MovistarTVRPCClientProfile             m_clientProfile;
+		MovistarTVRPCPlatformProfile           m_platformProfile;
 		std::vector<MovistarTVAddress>         m_offerings;
 		std::vector<PVRMovistarTVChannel>      m_channels;
 		std::vector<PVRMovistarTVChannelGroup> m_groups;
-		
 };

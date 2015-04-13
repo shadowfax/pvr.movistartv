@@ -94,6 +94,12 @@ struct DVBSTPSingleService
 	DVBSTPSingeServiceSI     serviceInfo;
 };
 
+class IDVBSTPCallBack
+{
+	public:
+		virtual void OnXmlReceived(const SDSMulticastDeliveryPacket& file) = 0;
+};
+
 class MovistarTVDVBSTP
 {
 	public:
@@ -104,6 +110,10 @@ class MovistarTVDVBSTP
 		std::vector<DVBSTPSingleService> GetBroadcastDiscovery(const std::string& address, unsigned short port);
 		std::vector<DVBSTPPackage> GetPackageDiscovery(const std::string& address, unsigned short port);
 		void GetBCGDiscovery(const std::string& address, unsigned short port);
+
+		void setCallback(IDVBSTPCallBack* callback);
+
+		std::vector<SDSMulticastDeliveryPacket> GetAllXmlFiles(const std::string& address, unsigned short port);
 	protected:
 		virtual bool GetXmlFile(const std::string& address, unsigned short port, unsigned short payload_id, std::string& return_value);
 		SOCKET CreateSocket(unsigned short port);
@@ -112,4 +122,6 @@ class MovistarTVDVBSTP
 		/* Cache methods */
 		void WriteCache(const std::string& filename, const std::string& content);
 
+	private:
+		IDVBSTPCallBack* m_DVBSTPCallback;
 };
