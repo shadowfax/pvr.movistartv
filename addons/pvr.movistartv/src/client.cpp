@@ -100,6 +100,10 @@ void ADDON_Destroy()
 {
   delete m_data;
   m_bCreated = false;
+
+  SAFE_DELETE(PVR);
+  SAFE_DELETE(XBMC);
+
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
 
