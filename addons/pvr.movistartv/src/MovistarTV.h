@@ -57,6 +57,7 @@ class MovistarTV : IDVBSTPCallBack
 		void ParseServiceProviderDiscovery(const std::string& data);
 		void ParseBroadcastDiscoveryInformation(const std::string& data);
 		void ParsePackageDiscoveryInformation(const std::string& data);
+		void ParseBCGDiscoveryInformation(const std::string& data);
 
 	private:
 		PLATFORM::CMutex                       m_ChannelCacheMutex;

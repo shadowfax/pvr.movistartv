@@ -618,52 +618,88 @@ void MovistarTV::ParsePackageDiscoveryInformation(const std::string& data)
 	}
 }
 
+void MovistarTV::ParseBCGDiscoveryInformation(const std::string& data)
+{
+	/* Process the XML data */
+	xml_document<> xmlDoc;
+	try
+	{
+		xmlDoc.parse<0>((char *)data.c_str());
+	}
+	catch (parse_error p)
+	{
+		XBMC->Log(LOG_ERROR, "Unable parse BCGDiscovery XML: %s", p.what());
+		return;
+	}
+
+	xml_node<> *pServiceDiscoveryRootElement = xmlDoc.first_node("ServiceDiscovery");
+	if (!pServiceDiscoveryRootElement)
+	{
+		XBMC->Log(LOG_ERROR, "BCGDiscovery has no <ServiceDiscovery> tag");
+		return;
+	}
+
+	xml_node<> *pBCGDiscoveryElement = pServiceDiscoveryRootElement->first_node("BCGDiscovery");
+	if (!pBCGDiscoveryElement)
+	{
+		XBMC->Log(LOG_ERROR, "BCGDiscovery has no <BCGDiscovery> tag");
+		return;
+	}
+
+
+}
+
 void MovistarTV::OnXmlReceived(const SDSMulticastDeliveryPacket& file)
 {
 	switch (file.header.payload_id)
 	{
 		case 1:	/* SD&S Service Provider Discovery Information */
-			XBMC->Log(LOG_NOTICE, "SD&S Service Provider Discovery Information");
+			XBMC->Log(LOG_DEBUG, "SD&S Service Provider Discovery Information");
 			ParseServiceProviderDiscovery(file.payload);
 			break;
 		case 2: /* SD&S Broadcast Discovery Information */
-			XBMC->Log(LOG_NOTICE, "SD&S Broadcast Discovery Information");
+			XBMC->Log(LOG_DEBUG, "SD&S Broadcast Discovery Information");
 			ParseBroadcastDiscoveryInformation(file.payload);
 			break;
 		case 3: /* SD&S COD Discovery Information */
-			XBMC->Log(LOG_NOTICE, "SD&S COD Discovery Information");
+			XBMC->Log(LOG_DEBUG, "SD&S COD Discovery Information");
 			break;
 		case 4: /* SD&S Services from other SPs */
-			XBMC->Log(LOG_NOTICE, "SD&S Services from other SPs");
+			XBMC->Log(LOG_DEBUG, "SD&S Services from other SPs");
 			break;
 		case 5: /* SD&S Package Discovery Information */
-			XBMC->Log(LOG_NOTICE, "SD&S Package Discovery Information");
+			XBMC->Log(LOG_DEBUG, "SD&S Package Discovery Information");
 			ParsePackageDiscoveryInformation(file.payload);
 			break;
 		case 6: /* SD&S BCG Discovery Information */
-			XBMC->Log(LOG_NOTICE, "SD&S BCG Discovery Information");
+			XBMC->Log(LOG_DEBUG, "SD&S BCG Discovery Information");
+			ParseBCGDiscoveryInformation(file.payload);
 			break;
 		case 7: /* SD&S Regionalisation Discovery Information */
-			XBMC->Log(LOG_NOTICE, "SD&S Regionalisation Discovery Information");
+			XBMC->Log(LOG_DEBUG, "SD&S Regionalisation Discovery Information");
 			break;
 		case 177: /* CDS XML download session description */
-			XBMC->Log(LOG_NOTICE, "CDS XML download session description");
+			XBMC->Log(LOG_DEBUG, "CDS XML download session description");
 			break;
 		case 178: /* RMS-FUS Firmware Update Announcements */
-			XBMC->Log(LOG_NOTICE, "RMS-FUS Firmware Update Announcements");
+			XBMC->Log(LOG_DEBUG, "RMS-FUS Firmware Update Announcements");
 			break;
 		case 193: /* Application Discovery Information */
-			XBMC->Log(LOG_NOTICE, "Application Discovery Information");
+			XBMC->Log(LOG_DEBUG, "Application Discovery Information");
 			break;
 
 		default:
 			if ((file.header.payload_id >= 165) && (file.header.payload_id <= 175))
 			{
-				XBMC->Log(LOG_NOTICE, "BCG Payload ID values");
+				XBMC->Log(LOG_DEBUG, "BCG Payload ID values");
+			}
+			else if ((file.header.payload_id >= 240) && (file.header.payload_id <= 255))
+			{
+				XBMC->Log(LOG_DEBUG, "User Private");
 			}
 			else
 			{
-				XBMC->Log(LOG_NOTICE, "Received payload ID %d", file.header.payload_id);
+				XBMC->Log(LOG_DEBUG, "Received payload ID %d", file.header.payload_id);
 			}
 	}
 }
