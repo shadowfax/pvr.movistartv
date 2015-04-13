@@ -140,6 +140,21 @@ std::vector<SDSMulticastDeliveryPacket> MovistarTVDVBSTP::GetAllXmlFiles(const s
 		}
 	}
 
+	/* leave multicast group */
+#if defined(TARGET_WINDOWS)
+	if (setsockopt(sd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) < 0)
+#else
+	if (setsockopt(sd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0)
+#endif
+	{
+		XBMC->Log(LOG_ERROR, "Can not leave the multicast group %s", address.c_str());
+	}
+
+	if (closesocket(sd) != 0)
+	{
+		XBMC->Log(LOG_ERROR, "can not close the socket.");
+	}
+
 	return files;
 }
 

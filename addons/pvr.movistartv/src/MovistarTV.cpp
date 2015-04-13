@@ -107,6 +107,8 @@ bool MovistarTV::LoadChannels(void)
 
 PVR_ERROR MovistarTV::GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
+	PLATFORM::CLockObject lock(m_mutex);
+
 	if (m_channels.size() <= 0)
 	{
 		LoadChannels();
