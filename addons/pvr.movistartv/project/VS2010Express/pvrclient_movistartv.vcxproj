@@ -106,9 +106,6 @@ if errorlevel 1 exit 0 else exit %errorlevel%</Command>
     <ProjectReference Include="..\..\..\..\project\VS2010Express\platform\platform.vcxproj">
       <Project>{fe4573f6-a794-4ad3-b37f-49e51f1140e6}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\..\project\VS2010Express\tinyxml\tinyxml.vcxproj">
-      <Project>{bdc7d21d-9fd9-41aa-bec8-8b70e1448c50}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\..\lib\jsoncpp\project\VS2010Express\libjsoncpp.vcxproj">
       <Project>{F3A72A50-E295-49BA-ACD7-8696907E0351}</Project>
     </ProjectReference>
